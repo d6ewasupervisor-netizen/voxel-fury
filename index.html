@@ -30,16 +30,52 @@
         }
         #hud div { margin: 3px 0; }
 
-        /* Mobile Controls */
-        #controls {
+        /* Bottom control bar: steering left, pedals right */
+        #control-bar {
             position: fixed;
             bottom: 0; left: 0; right: 0;
-            height: 30vh;
+            height: 45vh;
             display: flex;
             z-index: 50;
         }
-        .control-zone {
+
+        /* Steering on the left half */
+        #steer-zone {
             flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        #steer-indicator {
+            width: 180px;
+            height: 60px;
+            background: rgba(0,255,255,0.1);
+            border: 2px solid #0ff;
+            border-radius: 30px;
+            position: relative;
+        }
+        #steer-thumb {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 40px;
+            height: 40px;
+            background: #0ff;
+            border-radius: 50%;
+            box-shadow: 0 0 20px #0ff;
+            transition: left 0.05s;
+        }
+
+        /* Pedals on the right half */
+        #controls {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+        }
+        .control-zone {
             display: flex;
             align-items: center;
             justify-content: center;
@@ -60,36 +96,6 @@
         .pedal.active { opacity: 1; transform: scale(1.1); }
         #brake { background: rgba(255,50,50,0.4); border: 2px solid #f55; }
         #gas { background: rgba(50,255,50,0.4); border: 2px solid #5f5; }
-
-        #steer-zone {
-            position: fixed;
-            bottom: 30vh;
-            left: 0; right: 0;
-            height: 25vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        #steer-indicator {
-            width: 200px;
-            height: 60px;
-            background: rgba(0,255,255,0.1);
-            border: 2px solid #0ff;
-            border-radius: 30px;
-            position: relative;
-        }
-        #steer-thumb {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            width: 40px;
-            height: 40px;
-            background: #0ff;
-            border-radius: 50%;
-            box-shadow: 0 0 20px #0ff;
-            transition: left 0.05s;
-        }
 
         /* Reset button (mobile) */
         #reset-btn {
@@ -172,18 +178,16 @@
             #hud { font-size: 11px; top: 4px; left: 4px; }
             #hud div { margin: 2px 0; }
             #minimap { width: 80px !important; height: 80px !important; }
-            .pedal { width: 64px; height: 90px; font-size: 13px; }
-            #steer-indicator { width: 160px; height: 48px; }
-            #steer-thumb { width: 32px; height: 32px; }
-            #controls { height: 28vh; }
-            #steer-zone { bottom: 28vh; height: 22vh; }
+            .pedal { width: 58px; height: 80px; font-size: 12px; }
+            #steer-indicator { width: 130px; height: 44px; }
+            #steer-thumb { width: 30px; height: 30px; }
+            #controls { gap: 6px; }
         }
 
         /* Responsive: landscape phones */
         @media (max-height: 500px) and (orientation: landscape) {
-            #controls { height: 40vh; }
-            #steer-zone { bottom: 40vh; height: 30vh; }
-            .pedal { width: 70px; height: 80px; font-size: 13px; }
+            #control-bar { height: 50vh; }
+            .pedal { width: 66px; height: 74px; font-size: 12px; }
             #hud { font-size: 11px; }
             #hud div { margin: 1px 0; }
             #minimap { width: 80px !important; height: 80px !important; top: 4px !important; right: 4px !important; }
@@ -229,22 +233,23 @@
         <span>Rotate your device to landscape for the best experience</span>
     </div>
 
-    <div id="steer-zone">
-        <div id="steer-indicator">
-            <div id="steer-thumb"></div>
+    <div id="control-bar">
+        <div id="steer-zone">
+            <div id="steer-indicator">
+                <div id="steer-thumb"></div>
+            </div>
         </div>
-    </div>
-    
-    <div id="controls">
-        <div class="control-zone">
-            <div id="brake" class="pedal">BRAKE</div>
-        </div>
-        <div class="control-zone" style="flex-direction:column; gap:10px;">
-            <div id="nitro" class="pedal" style="width:70px; height:50px; background:rgba(0,255,255,0.3); border-color:#0ff;">N2O</div>
-            <div id="handbrake" class="pedal" style="width:70px; height:50px; background:rgba(255,100,0,0.3); border-color:#f64;">HB</div>
-        </div>
-        <div class="control-zone">
-            <div id="gas" class="pedal">GAS</div>
+        <div id="controls">
+            <div class="control-zone">
+                <div id="brake" class="pedal">BRAKE</div>
+            </div>
+            <div class="control-zone" style="flex-direction:column; gap:10px;">
+                <div id="nitro" class="pedal" style="width:70px; height:50px; background:rgba(0,255,255,0.3); border-color:#0ff;">N2O</div>
+                <div id="handbrake" class="pedal" style="width:70px; height:50px; background:rgba(255,100,0,0.3); border-color:#f64;">HB</div>
+            </div>
+            <div class="control-zone">
+                <div id="gas" class="pedal">GAS</div>
+            </div>
         </div>
     </div>
 
@@ -712,8 +717,7 @@
 
         // Hide on-screen controls on non-touch devices
         if (!isTouchDevice) {
-            document.getElementById('controls').style.display = 'none';
-            document.getElementById('steer-zone').style.display = 'none';
+            document.getElementById('control-bar').style.display = 'none';
         }
 
         // Haptic feedback helper

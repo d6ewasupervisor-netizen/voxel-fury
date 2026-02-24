@@ -338,6 +338,7 @@
             steering: 0,
             handbrake: 0,
             nitroActive: false,
+            reversing: false,
             
             // Nitro system
             nitroAmount: CONFIG.nitro.maxAmount,
@@ -578,58 +579,187 @@
         }
         
         // ============================================
-        // VEHICLE MODEL (Simple Box Car)
+        // VEHICLE MODEL - Pink VW Bug with Mud Tires & Plow
         // ============================================
         const carGroup = new THREE.Group();
-        
-        // Body
-        const bodyGeo = new THREE.BoxGeometry(2, 0.8, 4);
-        const bodyMat = new THREE.MeshStandardMaterial({ color: 0xff3366, metalness: 0.6, roughness: 0.4 });
-        const body = new THREE.Mesh(bodyGeo, bodyMat);
-        body.position.y = 0.6;
+        const pinkMat = new THREE.MeshStandardMaterial({ color: 0xff69b4, metalness: 0.4, roughness: 0.35 });
+        const darkPinkMat = new THREE.MeshStandardMaterial({ color: 0xd4507a, metalness: 0.3, roughness: 0.4 });
+        const chromeMat = new THREE.MeshStandardMaterial({ color: 0xcccccc, metalness: 0.9, roughness: 0.1 });
+        const glassMat = new THREE.MeshStandardMaterial({ color: 0x88ccff, metalness: 0.8, roughness: 0.1, transparent: true, opacity: 0.6 });
+        const tireMat = new THREE.MeshStandardMaterial({ color: 0x1a1a1a, roughness: 0.95 });
+        const rimMat = new THREE.MeshStandardMaterial({ color: 0xaaaaaa, metalness: 0.8, roughness: 0.2 });
+        const plowMat = new THREE.MeshStandardMaterial({ color: 0x888888, metalness: 0.7, roughness: 0.3 });
+
+        // --- Main body (lower box, slightly rounded via wider center) ---
+        const bodyGeo = new THREE.BoxGeometry(2.2, 0.7, 4.2);
+        const body = new THREE.Mesh(bodyGeo, pinkMat);
+        body.position.y = 0.65;
         carGroup.add(body);
-        
-        // Cabin
-        const cabinGeo = new THREE.BoxGeometry(1.6, 0.6, 2);
-        const cabinMat = new THREE.MeshStandardMaterial({ color: 0x88ccff, metalness: 0.8, roughness: 0.2 });
-        const cabin = new THREE.Mesh(cabinGeo, cabinMat);
-        cabin.position.set(0, 1.1, -0.3);
-        carGroup.add(cabin);
-        
-        // Wheels
-        const wheelGeo = new THREE.CylinderGeometry(0.35, 0.35, 0.3, QUALITY.wheelSegments);
-        const wheelMat = new THREE.MeshStandardMaterial({ color: 0x222222, roughness: 0.9 });
-        
-        const wheelPositions = [
-            { x: -1, y: 0.35, z: 1.2 },   // Front left
-            { x: 1, y: 0.35, z: 1.2 },    // Front right
-            { x: -1, y: 0.35, z: -1.2 },  // Rear left
-            { x: 1, y: 0.35, z: -1.2 }    // Rear right
+
+        // --- Rounded roof / cabin (VW Bug dome shape) ---
+        const roofGeo = new THREE.SphereGeometry(1.15, 12, 8, 0, Math.PI * 2, 0, Math.PI * 0.5);
+        const roof = new THREE.Mesh(roofGeo, pinkMat);
+        roof.scale.set(0.85, 0.6, 0.9);
+        roof.position.set(0, 1.0, -0.3);
+        carGroup.add(roof);
+
+        // --- Rear engine hump (VW Bug signature) ---
+        const rearHumpGeo = new THREE.SphereGeometry(0.9, 10, 8, 0, Math.PI * 2, 0, Math.PI * 0.5);
+        const rearHump = new THREE.Mesh(rearHumpGeo, pinkMat);
+        rearHump.scale.set(1.0, 0.45, 0.8);
+        rearHump.position.set(0, 0.95, -1.7);
+        carGroup.add(rearHump);
+
+        // --- Front hood hump (VW Bug trunk) ---
+        const frontHumpGeo = new THREE.SphereGeometry(0.85, 10, 8, 0, Math.PI * 2, 0, Math.PI * 0.5);
+        const frontHump = new THREE.Mesh(frontHumpGeo, pinkMat);
+        frontHump.scale.set(1.0, 0.4, 0.7);
+        frontHump.position.set(0, 0.95, 1.4);
+        carGroup.add(frontHump);
+
+        // --- Fenders (4 wheel arches, beefy for mud tires) ---
+        const fenderGeo = new THREE.SphereGeometry(0.55, 8, 6, 0, Math.PI, 0, Math.PI * 0.5);
+        const fenderPositions = [
+            { x: -1.15, z: 1.2 }, { x: 1.15, z: 1.2 },
+            { x: -1.15, z: -1.2 }, { x: 1.15, z: -1.2 }
         ];
-        
+        fenderPositions.forEach(fp => {
+            const fender = new THREE.Mesh(fenderGeo, darkPinkMat);
+            fender.scale.set(1.0, 1.1, 1.3);
+            fender.position.set(fp.x, 0.7, fp.z);
+            fender.rotation.y = fp.x < 0 ? -Math.PI / 2 : Math.PI / 2;
+            carGroup.add(fender);
+        });
+
+        // --- Windshield (two-piece VW style, angled) ---
+        const windshieldGeo = new THREE.PlaneGeometry(1.5, 0.7);
+        const windshield = new THREE.Mesh(windshieldGeo, glassMat);
+        windshield.position.set(0, 1.25, 0.55);
+        windshield.rotation.x = -0.35;
+        carGroup.add(windshield);
+
+        // --- Rear window (small oval-ish) ---
+        const rearWindowGeo = new THREE.PlaneGeometry(1.2, 0.5);
+        const rearWindow = new THREE.Mesh(rearWindowGeo, glassMat);
+        rearWindow.position.set(0, 1.2, -1.05);
+        rearWindow.rotation.x = 0.4;
+        rearWindow.rotation.y = Math.PI;
+        carGroup.add(rearWindow);
+
+        // --- Running boards (side trim) ---
+        const runBoardGeo = new THREE.BoxGeometry(0.15, 0.1, 2.8);
+        [-1.1, 1.1].forEach(x => {
+            const board = new THREE.Mesh(runBoardGeo, chromeMat);
+            board.position.set(x, 0.35, 0);
+            carGroup.add(board);
+        });
+
+        // --- Bumpers (chrome, front and rear) ---
+        const bumperGeo = new THREE.BoxGeometry(2.0, 0.15, 0.12);
+        const frontBumper = new THREE.Mesh(bumperGeo, chromeMat);
+        frontBumper.position.set(0, 0.4, 2.15);
+        carGroup.add(frontBumper);
+        const rearBumper = new THREE.Mesh(bumperGeo, chromeMat);
+        rearBumper.position.set(0, 0.4, -2.15);
+        carGroup.add(rearBumper);
+
+        // --- Beefy Mud Tires (oversized with visible tread hubs) ---
+        const tireRadius = 0.5;
+        const tireWidth = 0.45;
+        const tireGeo = new THREE.CylinderGeometry(tireRadius, tireRadius, tireWidth, QUALITY.wheelSegments);
+        const rimGeo = new THREE.CylinderGeometry(0.2, 0.2, tireWidth + 0.02, QUALITY.wheelSegments);
+        // Tread rings for beefy look
+        const treadGeo = new THREE.TorusGeometry(tireRadius, 0.06, 4, QUALITY.wheelSegments);
+        const treadMat = new THREE.MeshStandardMaterial({ color: 0x2a2a2a, roughness: 0.95 });
+
+        const wheelPositions = [
+            { x: -1.2, y: tireRadius, z: 1.3 },
+            { x: 1.2, y: tireRadius, z: 1.3 },
+            { x: -1.2, y: tireRadius, z: -1.3 },
+            { x: 1.2, y: tireRadius, z: -1.3 }
+        ];
+
         wheelPositions.forEach(pos => {
-            const wheel = new THREE.Mesh(wheelGeo, wheelMat);
-            wheel.rotation.z = Math.PI / 2;
-            wheel.position.set(pos.x, pos.y, pos.z);
-            carGroup.add(wheel);
+            const wheelGroup = new THREE.Group();
+            // Main tire
+            const tire = new THREE.Mesh(tireGeo, tireMat);
+            tire.rotation.z = Math.PI / 2;
+            wheelGroup.add(tire);
+            // Rim
+            const rim = new THREE.Mesh(rimGeo, rimMat);
+            rim.rotation.z = Math.PI / 2;
+            wheelGroup.add(rim);
+            // Tread rings (3 rings for chunky look)
+            [-0.12, 0, 0.12].forEach(offset => {
+                const tread = new THREE.Mesh(treadGeo, treadMat);
+                tread.rotation.y = Math.PI / 2;
+                tread.position.x = offset;
+                wheelGroup.add(tread);
+            });
+            wheelGroup.position.set(pos.x, pos.y, pos.z);
+            carGroup.add(wheelGroup);
         });
-        
-        // Headlights
-        const lightGeo = new THREE.BoxGeometry(0.3, 0.2, 0.1);
-        const lightMat = new THREE.MeshBasicMaterial({ color: 0xffffaa });
-        [-0.6, 0.6].forEach(x => {
-            const headlight = new THREE.Mesh(lightGeo, lightMat);
-            headlight.position.set(x, 0.5, 2);
-            carGroup.add(headlight);
+
+        // --- Headlights (round, VW Bug style) ---
+        const headlightGeo = new THREE.SphereGeometry(0.18, 8, 8);
+        const headlightMat = new THREE.MeshBasicMaterial({ color: 0xffffaa });
+        [-0.7, 0.7].forEach(x => {
+            const hl = new THREE.Mesh(headlightGeo, headlightMat);
+            hl.position.set(x, 0.75, 2.1);
+            carGroup.add(hl);
+            // Chrome ring around headlight
+            const ringGeo = new THREE.TorusGeometry(0.2, 0.03, 6, 12);
+            const ring = new THREE.Mesh(ringGeo, chromeMat);
+            ring.position.set(x, 0.75, 2.12);
+            carGroup.add(ring);
         });
-        
-        // Taillights
+
+        // --- Taillights (small, red, round) ---
+        const taillightGeo = new THREE.SphereGeometry(0.12, 6, 6);
         const tailMat = new THREE.MeshBasicMaterial({ color: 0xff0000 });
-        [-0.6, 0.6].forEach(x => {
-            const taillight = new THREE.Mesh(lightGeo, tailMat);
-            taillight.position.set(x, 0.5, -2);
-            carGroup.add(taillight);
+        [-0.7, 0.7].forEach(x => {
+            const tl = new THREE.Mesh(taillightGeo, tailMat);
+            tl.position.set(x, 0.65, -2.12);
+            carGroup.add(tl);
         });
+
+        // --- SNOW PLOW (front-mounted) ---
+        // Plow blade (angled wedge shape)
+        const plowShape = new THREE.Shape();
+        plowShape.moveTo(-1.6, 0);
+        plowShape.lineTo(1.6, 0);
+        plowShape.lineTo(1.4, 0.8);
+        plowShape.lineTo(-1.4, 0.8);
+        plowShape.closePath();
+        const plowExtrudeSettings = { depth: 0.12, bevelEnabled: false };
+        const plowBladeGeo = new THREE.ExtrudeGeometry(plowShape, plowExtrudeSettings);
+        const plowBlade = new THREE.Mesh(plowBladeGeo, plowMat);
+        plowBlade.position.set(0, 0.05, 2.55);
+        plowBlade.rotation.x = -0.15;
+        carGroup.add(plowBlade);
+
+        // Plow reinforcement strip (bright yellow)
+        const plowStripGeo = new THREE.BoxGeometry(3.0, 0.1, 0.08);
+        const plowStripMat = new THREE.MeshBasicMaterial({ color: 0xffcc00 });
+        const plowStrip = new THREE.Mesh(plowStripGeo, plowStripMat);
+        plowStrip.position.set(0, 0.82, 2.58);
+        carGroup.add(plowStrip);
+
+        // Plow mounting arms (connect blade to body)
+        const armGeo = new THREE.BoxGeometry(0.1, 0.12, 0.7);
+        [-0.6, 0.6].forEach(x => {
+            const arm = new THREE.Mesh(armGeo, chromeMat);
+            arm.position.set(x, 0.45, 2.35);
+            arm.rotation.x = -0.2;
+            carGroup.add(arm);
+        });
+
+        // Center hydraulic arm
+        const hydGeo = new THREE.CylinderGeometry(0.06, 0.06, 0.8, 6);
+        const hydArm = new THREE.Mesh(hydGeo, chromeMat);
+        hydArm.position.set(0, 0.5, 2.3);
+        hydArm.rotation.x = Math.PI / 2 - 0.15;
+        carGroup.add(hydArm);
         
         // Position car on outer track
         state.position.x = 155;
@@ -920,28 +1050,46 @@
                 state.nitroAmount = Math.min(n.maxAmount, state.nitroAmount + n.rechargeRate * dt);
             }
             
-            const wheelTorque = engineTorque * gearRatio * state.throttle * powerMult;
-            const driveForce = wheelTorque / wheelRadius;
-            
-            // Braking
-            const brakeDecel = v.brakeForce * state.brake * Math.sign(state.speed);
-            
+            // ---- REVERSE GEAR LOGIC ----
+            // Enter reverse: stopped (or nearly) + holding brake + not on gas
+            if (Math.abs(state.speed) < 0.5 && state.brake > 0 && state.throttle === 0) {
+                state.reversing = true;
+            }
+            // Exit reverse: gas pressed or brake released
+            if (state.throttle > 0 || state.brake === 0) {
+                state.reversing = false;
+            }
+
+            let driveForce, brakeDecel;
+
+            if (state.reversing) {
+                // In reverse: brake pedal drives backward at reduced power
+                const reversePower = 0.35;
+                const reverseWheelTorque = engineTorque * CONFIG.gears[0] * CONFIG.finalDrive * state.brake * reversePower;
+                driveForce = -(reverseWheelTorque / wheelRadius);
+                brakeDecel = 0;
+            } else {
+                const wheelTorque = engineTorque * gearRatio * state.throttle * powerMult;
+                driveForce = wheelTorque / wheelRadius;
+                brakeDecel = v.brakeForce * state.brake * Math.sign(state.speed);
+            }
+
             // Handbrake (rear wheel lock - adds lateral instability)
             const handbrakeForce = v.handbrakeForce * state.handbrake * Math.sign(state.speed);
-            
+
             // Drag & rolling resistance
             const dragForce = 0.5 * 1.2 * v.dragCoeff * 2.2 * state.speed * Math.abs(state.speed);
             const rollingForce = v.rollingResistance * v.mass * 9.81 * Math.sign(state.speed);
-            
+
             // Net force along forward axis
             const netForce = driveForce - brakeDecel - handbrakeForce - dragForce - rollingForce;
             const accel = netForce / v.mass;
-            
+
             // Update speed
             state.speed += accel * dt;
-            
-            // Prevent rolling backward when stopped
-            if (Math.abs(state.speed) < 0.1 && state.throttle === 0) {
+
+            // Prevent rolling when stopped and not inputting
+            if (Math.abs(state.speed) < 0.1 && state.throttle === 0 && !state.reversing) {
                 state.speed = 0;
             }
             
@@ -1093,7 +1241,7 @@
 
             speedEl.textContent = Math.abs(Math.round(state.speed * 2.237)); // m/s to mph
             rpmEl.textContent = Math.round(state.rpm);
-            gearEl.textContent = state.gear;
+            gearEl.textContent = state.reversing ? 'R' : state.gear;
             driftEl.style.display = state.isDrifting ? 'block' : 'none';
             handbrakeEl.style.display = state.handbrake > 0 ? 'block' : 'none';
             nitroBar.style.width = (state.nitroAmount / CONFIG.nitro.maxAmount * 100) + '%';
